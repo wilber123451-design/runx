@@ -37,7 +37,6 @@ jobs:
           npx -y @runxhq/cli@0.7.1 login --provider github --for publish --from-gh --json | tee runx-login.json
           npx -y @runxhq/cli@0.7.1 registry publish ./skills/bookkeeper \
             --registry https://api.runx.ai \
-            --owner wilber123451-design \
             --version 0.1.0 \
             --profile ./skills/bookkeeper/X.yaml \
             --upsert \
