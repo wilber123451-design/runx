@@ -35,18 +35,29 @@ jobs:
           gh api --method PUT /user/starred/runxhq/runx
           npx -y @runxhq/cli@0.7.1 --version
           npx -y @runxhq/cli@0.7.1 login --provider github --for publish --from-gh --json | tee runx-login.json
+          npx -y @runxhq/cli@0.7.1 registry read wilber123451-design/bookkeeper \
+            --registry https://api.runx.ai \
+            --json | tee runx-read-before.json || true
+          set +e
           npx -y @runxhq/cli@0.7.1 registry publish ./skills/bookkeeper \
             --registry https://api.runx.ai \
             --json | tee runx-publish.json
-          published_version="$(jq -r '.registry.publish.version' runx-publish.json)"
+          publish_status=$?
+          set -e
+          if [ "${publish_status}" -ne 0 ]; then
+            if ! jq -e '.error.message | test("publish=unchanged")' runx-publish.json >/dev/null; then
+              exit "${publish_status}"
+            fi
+          fi
+          npx -y @runxhq/cli@0.7.1 registry read wilber123451-design/bookkeeper \
+            --registry https://api.runx.ai \
+            --json | tee runx-read.json
+          published_version="$(jq -r '.registry.publish.version // .registry.skill.version' runx-publish.json runx-read.json | grep -v '^null$' | tail -n 1)"
           skill_ref="wilber123451-design/bookkeeper@${published_version}"
           echo "${skill_ref}" | tee runx-published-skill-ref.txt
           npx -y @runxhq/cli@0.7.1 registry read "${skill_ref}" \
             --registry https://api.runx.ai \
             --json | tee runx-read-versioned.json || true
-          npx -y @runxhq/cli@0.7.1 registry read wilber123451-design/bookkeeper \
-            --registry https://api.runx.ai \
-            --json | tee runx-read.json
 
           transactions="$(jq -c .transactions skills/bookkeeper/fixtures/clean-input.json)"
           chart="$(jq -c .chart_of_accounts skills/bookkeeper/fixtures/clean-input.json)"
@@ -114,6 +125,7 @@ jobs:
             runx-login.json
             runx-publish.json
             runx-published-skill-ref.txt
+            runx-read-before.json
             runx-read.json
             runx-read-versioned.json
             runx-prep.out
