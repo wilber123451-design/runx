@@ -35,10 +35,11 @@ jobs:
           gh api --method PUT /user/starred/runxhq/runx
           npx -y @runxhq/cli@0.7.1 --version
           npx -y @runxhq/cli@0.7.1 login --provider github --for publish --from-gh --json | tee runx-login.json
-          curl -fsS -X POST https://api.runx.ai/v1/index \
-            -H 'content-type: application/json' \
-            -d '{"repo_url":"https://github.com/wilber123451-design/frantic-bookkeeper-runx","ref":"main"}' \
-            | tee runx-index.json
+          npx -y @runxhq/cli@0.7.1 registry publish ./skills/bookkeeper \
+            --registry https://api.runx.ai \
+            --owner wilber123451-design \
+            --upsert \
+            --json | tee runx-publish.json
           npx -y @runxhq/cli@0.7.1 registry read wilber123451-design/bookkeeper@0.1.0 \
             --registry https://api.runx.ai \
             --json | tee runx-read-versioned.json || true
@@ -110,7 +111,7 @@ jobs:
           name: frantic-bookkeeper-publish
           path: |
             runx-login.json
-            runx-index.json
+            runx-publish.json
             runx-read.json
             runx-read-versioned.json
             runx-prep.out
